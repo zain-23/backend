@@ -4,11 +4,31 @@ import { USER } from "../models/user.model.js";
 import { uploadOnCloudinary } from "../utils/cloudinary.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 
+const generateAccessTokenAndRefreshToken = async (userId) => {
+  try {
+    const user = await USER.findOne({ userId });
+    const accessToken = user.generateAccessToken();
+    console.log("acceccToken", accessToken);
+    const refreshToken = user.generateRefresfToken();
+    console.log("refreshToken", refreshToken);
+    user.refreshToken = refreshToken;
+
+    await user.save({ validateBeforeSave: false });
+
+    return { accessToken, refreshToken };
+  } catch (error) {
+    throw new ApiError(
+      500,
+      "Something went wrong while generating access token and refresh token"
+    );
+  }
+};
+
 const registerUser = asyncHandler(async (req, res) => {
   // get user detail from front end.☑️
   // validation - not empty.☑️
   // check if user is already exist :username,email.☑️
-  // check fro images :check for avatar.☑️
+  // check for images :check for avatar.☑️
   // upload them cloudinary.☑️
   // create a user object to create an entry in db.
   // check for user creation.☑️
@@ -79,4 +99,60 @@ const registerUser = asyncHandler(async (req, res) => {
     .json(new ApiResponse(200, createdUser, "user register successfully"));
 });
 
-export { registerUser };
+const loginUser = asyncHandler(async (req, res) => {
+  // get data from front-end.
+  // find user with email or username.
+  // if user is not exist show error.
+  // if user is exist then check if password is correct.
+  // generate accessToken and refreshToken.
+  // save refreshToken to db.
+  // send acceccToken and refreshToken to user with the help of cookies.
+
+  const { userName, email, password } = req.body;
+  console.log(userName, email, password);
+  if (!userName || !email) {
+    throw new ApiError(404, "username or email is required");
+  }
+
+  const user = await USER.findOne({
+    $or: [{ userName }, { email }],
+  });
+  console.log("user", user);
+  if (!user) {
+    throw new ApiError(404, "username or email does'nt exist");
+  }
+
+  const isPasswordValid = await user.isPasswordCorrect(password);
+  console.log("isPasswordValid", isPasswordValid);
+  if (!isPasswordValid) {
+    throw new ApiError(401, "invalid user credentials");
+  }
+  const { refreshToken, accessToken } = generateAccessTokenAndRefreshToken(
+    user._id
+  );
+
+  const loggedInUser = USER.findById(user._id).select(
+    "-password -refreshToken"
+  );
+  const option = {
+    httpOnly: true,
+    secure: true,
+  };
+  return res
+    .status(200)
+    .cookie("accessToken", accessToken, option)
+    .cookie("refreshToken", refreshToken, option)
+    .json(
+      new ApiResponse(
+        201,
+        {
+          user: loggedInUser,
+          accessToken,
+          refreshToken,
+        },
+        "user loggedIn successFully"
+      )
+    );
+});
+
+export { registerUser, loginUser };
