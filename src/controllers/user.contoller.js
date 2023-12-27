@@ -6,13 +6,10 @@ import { ApiResponse } from "../utils/ApiResponse.js";
 
 const generateAccessTokenAndRefreshToken = async (userId) => {
   try {
-    const user = await USER.findOne({ userId });
+    const user = await USER.findById(userId);
     const accessToken = user.generateAccessToken();
-    console.log("acceccToken", accessToken);
     const refreshToken = user.generateRefresfToken();
-    console.log("refreshToken", refreshToken);
     user.refreshToken = refreshToken;
-
     await user.save({ validateBeforeSave: false });
 
     return { accessToken, refreshToken };
@@ -109,35 +106,36 @@ const loginUser = asyncHandler(async (req, res) => {
   // send acceccToken and refreshToken to user with the help of cookies.
 
   const { userName, email, password } = req.body;
-  console.log(userName, email, password);
-  if (!userName || !email) {
+
+  if (!(userName || email)) {
     throw new ApiError(404, "username or email is required");
   }
 
   const user = await USER.findOne({
     $or: [{ userName }, { email }],
   });
-  console.log("user", user);
+
   if (!user) {
     throw new ApiError(404, "username or email does'nt exist");
   }
 
   const isPasswordValid = await user.isPasswordCorrect(password);
-  console.log("isPasswordValid", isPasswordValid);
+
   if (!isPasswordValid) {
     throw new ApiError(401, "invalid user credentials");
   }
-  const { refreshToken, accessToken } = generateAccessTokenAndRefreshToken(
-    user._id
-  );
+  const { refreshToken, accessToken } =
+    await generateAccessTokenAndRefreshToken(user._id);
 
-  const loggedInUser = USER.findById(user._id).select(
+  const loggedInUser = await USER.findById(user._id).select(
     "-password -refreshToken"
   );
+
   const option = {
     httpOnly: true,
     secure: true,
   };
+
   return res
     .status(200)
     .cookie("accessToken", accessToken, option)

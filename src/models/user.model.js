@@ -10,18 +10,21 @@ const userSchema = new Schema(
       unique: true,
       trim: true,
       index: true,
+      required: true,
     },
     email: {
       type: String,
       required: true,
       unique: true,
       trim: true,
+      required: true,
     },
     fullName: {
       type: String,
       required: true,
       trim: true,
       index: true,
+      required: true,
     },
     avatar: {
       type: String, //cloudnary URL
@@ -54,11 +57,11 @@ userSchema.pre("save", async function (next) {
   next();
 });
 
-userSchema.method.isPasswordCorrect = async function (password) {
-  await bcrypt.compare(password, this.password);
+userSchema.methods.isPasswordCorrect = async function (password) {
+  return await bcrypt.compare(password, this.password);
 };
 
-userSchema.method.generateAccessToken = function () {
+userSchema.methods.generateAccessToken = function () {
   return Jwt.sign(
     {
       _id: this._id,
@@ -73,7 +76,7 @@ userSchema.method.generateAccessToken = function () {
   );
 };
 
-userSchema.method.generateRefresfToken = function () {
+userSchema.methods.generateRefresfToken = function () {
   return Jwt.sign(
     {
       _id: this._id,
