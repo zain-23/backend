@@ -2,6 +2,7 @@ import { Router } from "express";
 import {
   changeCurrentPassword,
   channelSubscribed,
+  getUserChannelsDetails,
   loginUser,
   logout,
   refreshAccessToken,
@@ -36,5 +37,6 @@ router
   .route("/change-avatar")
   .post(verifyJwt, upload.single("avatar"), updateUserAvatar);
 router.route("/subscribed/:username").post(verifyJwt, channelSubscribed);
+router.route("/find-channel/:userName").post(getUserChannelsDetails);
 
 export default router;
