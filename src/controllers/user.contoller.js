@@ -386,21 +386,19 @@ const getUserChannelsDetails = asyncHandler(async (req, res) => {
         },
       },
     },
-    // {
-    //   $project: {
-    //     fullName,
-    //     userName,
-    //     email,
-    //     avatar,
-    //     coverImage,
-    //     subscribersCount,
-    //     channelSubscribedCount,
-    //     isSubscribed,
-    //   },
-    // },
+    {
+      $project: {
+        fullName: 1,
+        userName: 1,
+        email: 1,
+        avatar: 1,
+        coverImage: 1,
+        subscribersCount: 1,
+        channelSubscribedCount: 1,
+        isSubscribed: 1,
+      },
+    },
   ]);
-
-  console.log("channelDetail", channelDetail);
 });
 
 const channelSubscribed = asyncHandler(async (req, res) => {
