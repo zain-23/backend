@@ -5,6 +5,7 @@ import { uploadOnCloudinary } from "../utils/cloudinary.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 import jwt from "jsonwebtoken";
 import { SUBSCRIPTION } from "../models/subscription.model.js";
+import mongoose from "mongoose";
 
 const generateAccessTokenAndRefreshToken = async (userId) => {
   try {
@@ -399,6 +400,7 @@ const getUserChannelsDetails = asyncHandler(async (req, res) => {
       },
     },
   ]);
+  console.log("channelDetail", channelDetail);
 });
 
 const channelSubscribed = asyncHandler(async (req, res) => {
@@ -433,6 +435,60 @@ const channelSubscribed = asyncHandler(async (req, res) => {
     .json(new ApiError(201, subscribeDetail, "Subscribed Successfully"));
 });
 
+const getUserWatchHistory = asyncHandler(async (req, res) => {
+  const userWatchHistory = await USER.aggregate([
+    {
+      $match: {
+        _id: new mongoose.Types.ObjectId(req.user?._id),
+      },
+    },
+    {
+      $lookup: {
+        from: "videos",
+        localField: "watchHistory",
+        foreignField: "_id",
+        as: "watchHistory",
+        pipeline: [
+          {
+            $lookup: {
+              from: "users",
+              localField: "owner",
+              foreignField: "_id",
+              as: "owner",
+              pipeline: [
+                {
+                  $project: {
+                    fullName: 1,
+                    userName: 1,
+                    avatar: 1,
+                  },
+                },
+              ],
+            },
+          },
+        ],
+      },
+    },
+    {
+      $addFields: {
+        owner: {
+          $first: "$owner",
+        },
+      },
+    },
+  ]);
+
+  return res
+    .status(200)
+    .json(
+      new ApiResponse(
+        201,
+        userWatchHistory[0].watchHistory,
+        "user history fetch successfully"
+      )
+    );
+});
+
 export {
   registerUser,
   loginUser,
@@ -444,4 +500,5 @@ export {
   updateUserCoverImage,
   getUserChannelsDetails,
   channelSubscribed,
+  getUserWatchHistory,
 };

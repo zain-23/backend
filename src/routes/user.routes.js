@@ -45,6 +45,6 @@ router.route("/update-user").patch(verifyJwt, updateUserDetails);
 
 // later i move this from here
 router.route("/subscribed/:username").post(verifyJwt, channelSubscribed);
-router.route("/find-channel/:userName").post(getUserChannelsDetails);
+router.route("/find-channel/:userName").get(getUserChannelsDetails);
 
 export default router;
