@@ -14,6 +14,7 @@ const videpSchema = new Schema(
     owner: {
       type: Schema.Types.ObjectId,
       ref: "User",
+      required: [true, "owner is required"],
     },
     title: {
       type: String,

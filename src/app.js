@@ -1,8 +1,8 @@
 import express from "express";
 import cors from "cors";
 import cookieParser from "cookie-parser";
-import { upload } from "./middlewares/multer.middleware.js";
 import userRoutes from "./routes/user.routes.js";
+import videoRouter from "./routes/video.routes.js";
 
 const app = express();
 
@@ -24,6 +24,7 @@ app.get("/", function (req, res) {
 //user Routes
 //http:localhost:8000/api/v2/users
 app.use("/api/v1/users", userRoutes);
+app.use("/api/v2/video", videoRouter);
 
 // app.use(upload());
 export { app };
