@@ -1,6 +1,7 @@
 import { Router } from "express";
 import {
   changeCurrentPassword,
+  channelSubscribed,
   loginUser,
   logout,
   refreshAccessToken,
@@ -34,5 +35,6 @@ router.route("/change-password").post(verifyJwt, changeCurrentPassword);
 router
   .route("/change-avatar")
   .post(verifyJwt, upload.single("avatar"), updateUserAvatar);
+router.route("/subscribed/:username").post(verifyJwt, channelSubscribed);
 
 export default router;

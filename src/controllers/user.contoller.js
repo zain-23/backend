@@ -4,6 +4,7 @@ import { USER } from "../models/user.model.js";
 import { uploadOnCloudinary } from "../utils/cloudinary.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 import jwt from "jsonwebtoken";
+import { SUBSCRIPTION } from "../models/subscription.model.js";
 
 const generateAccessTokenAndRefreshToken = async (userId) => {
   try {
@@ -401,6 +402,39 @@ const getUserChannelsDetails = asyncHandler(async (req, res) => {
 
   console.log("channelDetail", channelDetail);
 });
+
+const channelSubscribed = asyncHandler(async (req, res) => {
+  // recieve data from frontend.
+  // check data :invalid.
+  // find user with the help of logged in user.
+  // get channel name with params
+  // add user id to subscriber.
+  // jis ko user subscriber kry us ki id add kro channel.
+
+  const channelName = req.params.username;
+
+  if (!channelName) {
+    throw new ApiError(401, "error while subscriber the channel");
+  }
+
+  const user = await USER.findOne({ userName: channelName }).select(
+    "-password -refreshToken -watchHistory -userName -email -fullName -avatar -coverImage"
+  );
+
+  if (!user) {
+    throw new ApiError(401, "channel does't exist");
+  }
+
+  const subscribeDetail = await SUBSCRIPTION.create({
+    subscriber: req.user?._id,
+    channel: user._id,
+  });
+
+  return res
+    .status(200)
+    .json(new ApiError(201, subscribeDetail, "Subscribed Successfully"));
+});
+
 export {
   registerUser,
   loginUser,
@@ -411,4 +445,5 @@ export {
   updateUserAvatar,
   updateUserCoverImage,
   getUserChannelsDetails,
+  channelSubscribed,
 };
