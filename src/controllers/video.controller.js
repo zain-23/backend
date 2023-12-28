@@ -29,8 +29,7 @@ const uploadVideo = asyncHandler(async (req, res) => {
 
   const uploadedvideoFile = await uploadOnCloudinary(videoFileLocalPath);
   const uploadedThumbnail = await uploadOnCloudinary(thumbnailLocalPath);
-  console.log("uploadedvideoFile", uploadedvideoFile);
-  console.log("uploadedThumbnail", uploadedThumbnail);
+
   if (!uploadedvideoFile) {
     throw new ApiError(
       500,
