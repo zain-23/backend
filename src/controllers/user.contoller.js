@@ -338,6 +338,69 @@ const updateUserCoverImage = asyncHandler(async (req, res) => {
     .status(200)
     .json(new ApiResponse(201, user, "cover image updated successfully"));
 });
+
+const getUserChannelsDetails = asyncHandler(async (req, res) => {
+  const { userName } = req.params;
+
+  if (!userName) {
+    throw new ApiError(401, "Invalid user Name");
+  }
+
+  const channelDetail = await USER.aggregate([
+    {
+      $match: {
+        userName: userName,
+      },
+    },
+    {
+      $lookup: {
+        from: "subscriptions",
+        localField: "_id",
+        foreignField: "channel",
+        as: "subscribers",
+      },
+    },
+    {
+      $lookup: {
+        from: "subscriptions",
+        localField: "_id",
+        foreignField: "subscriber",
+        as: "subscribedTo",
+      },
+    },
+    {
+      $addFields: {
+        subscribersCount: {
+          $size: "$subscribers",
+        },
+        channelSubscribedCount: {
+          $size: "$subscribedTo",
+        },
+        isSubscribed: {
+          $cond: {
+            if: { $in: [req.user?._id, "$subscribers.subscriber"] },
+            then: true,
+            else: false,
+          },
+        },
+      },
+    },
+    {
+      $project: {
+        fullName,
+        userName,
+        email,
+        avatar,
+        coverImage,
+        subscribersCount,
+        channelSubscribedCount,
+        isSubscribed,
+      },
+    },
+  ]);
+
+  console.log("channelDetail", channelDetail);
+});
 export {
   registerUser,
   loginUser,
@@ -347,4 +410,5 @@ export {
   updateUserDetails,
   updateUserAvatar,
   updateUserCoverImage,
+  getUserChannelsDetails,
 };
