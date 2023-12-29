@@ -477,7 +477,7 @@ const getUserWatchHistory = asyncHandler(async (req, res) => {
       },
     },
   ]);
-
+  console.log("userWatchHistory", userWatchHistory);
   return res
     .status(200)
     .json(
@@ -489,6 +489,22 @@ const getUserWatchHistory = asyncHandler(async (req, res) => {
     );
 });
 
+const createUserWatchHistory = asyncHandler(async (req, res) => {
+  const { videoId } = req.params;
+
+  if (!videoId) {
+    throw new ApiError(401, "Invalid video id");
+  }
+
+  const user = req.user;
+  user.watchHistory.push(videoId);
+
+  await user.save();
+
+  return res
+    .status(201)
+    .json(new ApiResponse(201, user, "video added in watchHistory"));
+});
 export {
   registerUser,
   loginUser,
@@ -501,4 +517,5 @@ export {
   getUserChannelsDetails,
   channelSubscribed,
   getUserWatchHistory,
+  createUserWatchHistory,
 };

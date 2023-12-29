@@ -2,7 +2,9 @@ import { Router } from "express";
 import {
   changeCurrentPassword,
   channelSubscribed,
+  createUserWatchHistory,
   getUserChannelsDetails,
+  getUserWatchHistory,
   loginUser,
   logout,
   refreshAccessToken,
@@ -42,6 +44,8 @@ router
   .route("/change-coverimage")
   .patch(verifyJwt, upload.single("coverImage"), updateUserCoverImage);
 router.route("/update-user").patch(verifyJwt, updateUserDetails);
+router.route("/video/:videoId").get(verifyJwt, createUserWatchHistory);
+router.route("/watch-history").get(verifyJwt, getUserWatchHistory);
 
 // later i move this from here
 router.route("/subscribed/:username").post(verifyJwt, channelSubscribed);
