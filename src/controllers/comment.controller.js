@@ -20,7 +20,7 @@ const addComments = asyncHandler(async (req, res) => {
   }
 
   const loggedInUser = req.user;
-
+  console.log("loggedInUser", loggedInUser);
   const comment = await COMMENTS.create({
     video: videoId,
     content,
@@ -36,4 +36,10 @@ const addComments = asyncHandler(async (req, res) => {
     .json(new ApiResponse(201, "Comment Posted successfully", comment));
 });
 
-export { addComments };
+const getComments = asyncHandler(async (req, res) => {
+  // get video id with params.
+  // check empty
+  // 
+});
+
+export { addComments, getComments };

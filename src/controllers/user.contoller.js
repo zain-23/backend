@@ -96,17 +96,10 @@ const registerUser = asyncHandler(async (req, res) => {
   }
   return res
     .status(201)
-    .json(new ApiResponse(200, createdUser, "user register successfully"));
+    .json(new ApiResponse(200, "user register successfully", createdUser));
 });
 
 const loginUser = asyncHandler(async (req, res) => {
-  // get data from front-end.
-  // find user with email or username.
-  // if user is not exist show error.
-  // if user is exist then check if password is correct.
-  // generate accessToken and refreshToken.
-  // save refreshToken to db.
-  // send acceccToken and refreshToken to user with the help of cookies.
 
   const { userName, email, password } = req.body;
 
@@ -125,10 +118,12 @@ const loginUser = asyncHandler(async (req, res) => {
   const isPasswordValid = await user.isPasswordCorrect(password);
 
   if (!isPasswordValid) {
-    throw new ApiError(401, "invalid user credentials");
+    throw new ApiError(401, "Incorrect email or password");
   }
-  const { refreshToken, accessToken } =
-    await generateAccessTokenAndRefreshToken(user._id);
+  const {
+    refreshToken,
+    accessToken,
+  } = await generateAccessTokenAndRefreshToken(user._id);
 
   const loggedInUser = await USER.findById(user._id).select(
     "-password -refreshToken"
@@ -169,8 +164,6 @@ const logout = asyncHandler(async (req, res) => {
     }
   );
 
-  console.log("user", user);
-
   const option = {
     httpOnly: true,
     secure: true,
@@ -187,7 +180,6 @@ const refreshAccessToken = asyncHandler(async (req, res) => {
   const inCommingRefreshToken =
     req.cookie?.refreshToken || req.body.refreshToken;
 
-  console.log("inCommingRefreshToken", inCommingRefreshToken);
 
   if (!inCommingRefreshToken) {
     throw new ApiError(401, "invalid refresh Token");
@@ -198,10 +190,8 @@ const refreshAccessToken = asyncHandler(async (req, res) => {
       inCommingRefreshToken,
       process.env.REFRESH_TOKEN_SECRET
     );
-    console.log("decodedToken", decodedToken);
 
     const user = await USER.findById(decodedToken._id);
-    console.log("user", user);
 
     if (!user) {
       throw new ApiError(401, "wrong refresh Token");
@@ -210,9 +200,11 @@ const refreshAccessToken = asyncHandler(async (req, res) => {
     if (user.refreshToken !== inCommingRefreshToken) {
       throw new ApiError(401, "refresh token expired");
     }
-    const { accessToken, refreshToken: newRefreshToken } =
-      await user.generateAccessToken(user._id);
-    console.log("accessToken", accessToken, newRefreshToken);
+    const {
+      accessToken,
+      refreshToken: newRefreshToken,
+    } = await user.generateAccessToken(user._id);
+    
     const option = {
       httpOnly: true,
       secure: true,

@@ -59,7 +59,6 @@ const uploadVideo = asyncHandler(async (req, res) => {
       "some went wrong while uploading video try again later"
     );
   }
-  console.log("videoUploaded", videoUploaded);
   return res
     .status(201)
     .json(new ApiResponse(201, videoUploaded, "video uploaded successfully"));
