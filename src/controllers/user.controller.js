@@ -40,7 +40,7 @@ const registerUser = asyncHandler( async (req, res) => {
     //console.log("email: ", email);
 
     if (
-        [fullName, email, username, password].some((field) => field?.trim() === "" || field?.trim() === undefined)
+        [fullName, email, username, password].some((field) => field?.trim() === "")
     ) {
         throw new ApiError(400, "All fields are required")
     }
@@ -162,8 +162,8 @@ const logoutUser = asyncHandler(async(req, res) => {
     await User.findByIdAndUpdate(
         req.user._id,
         {
-            $set: {
-                refreshToken: undefined
+            $unset: {
+                refreshToken: 1 // this removes the field from document
             }
         },
         {
