@@ -70,20 +70,107 @@ const publishAVideo = asyncHandler(async (req, res) => {
 const getVideoById = asyncHandler(async (req, res) => {
   const { videoId } = req.params;
   //TODO: get video by id
+  if (!isValidObjectId(videoId)) {
+    throw new ApiError(401, "Invalid video id");
+  }
+
+  const video = await Video.findById(videoId);
+
+  if (!video) {
+    throw new ApiError(500, "can't find video");
+  }
+
+  return res
+    .status(200)
+    .json(new ApiResponse(201, "get video successfully", video));
 });
 
 const updateVideo = asyncHandler(async (req, res) => {
   const { videoId } = req.params;
+  const { title, description } = req.body;
   //TODO: update video details like title, description, thumbnail
+  if (!isValidObjectId(videoId)) {
+    throw new ApiError(401, "Invalid video id");
+  }
+  let thumbnailFileLocalPath;
+  if (req.file && req.file.path) {
+    thumbnailFileLocalPath = req.file.path;
+  }
+
+  const video = await Video.findByIdAndUpdate(
+    videoId,
+    {
+      $set: {
+        title,
+        description,
+        thumbnail: thumbnailFileLocalPath,
+      },
+    },
+    {
+      new: true,
+    }
+  );
+
+  if (!video) {
+    throw new ApiError(500, "some thing went wrong while updating video");
+  }
+
+  return res
+    .status(200)
+    .json(new ApiResponse(201, "video updated successfully", video));
 });
 
 const deleteVideo = asyncHandler(async (req, res) => {
   const { videoId } = req.params;
   //TODO: delete video
+  if (!isValidObjectId(videoId)) {
+    throw new ApiError(401, "Invalid video id");
+  }
+
+  const video = await Video.findByIdAndDelete(videoId);
+
+  if (!video) {
+    throw new ApiError(500, "can't find video");
+  }
+
+  return res
+    .status(200)
+    .json(new ApiResponse(201, "video deleted successfully", video));
 });
 
 const togglePublishStatus = asyncHandler(async (req, res) => {
   const { videoId } = req.params;
+  if (!isValidObjectId(videoId)) {
+    throw new ApiError(401, "Invalid video id");
+  }
+
+  const video = await Video.findById(videoId);
+
+  const updateVideoStatusUpdate = await Video.findByIdAndUpdate(
+    videoId,
+    {
+      $set: {
+        isPublished: !video.isPublished,
+      },
+    },
+    {
+      new: true,
+    }
+  );
+
+  if (!video) {
+    throw new ApiError(500, "can't find video");
+  }
+
+  return res
+    .status(200)
+    .json(
+      new ApiResponse(
+        201,
+        "video status updated successfully",
+        updateVideoStatusUpdate
+      )
+    );
 });
 
 export {
