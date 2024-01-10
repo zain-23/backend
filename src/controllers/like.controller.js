@@ -4,6 +4,8 @@ import { ApiError } from "../utils/ApiError.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
 
+// All Tweet Api Testing in done.
+
 const toggleVideoLike = asyncHandler(async (req, res) => {
   const { videoId } = req.params;
   //TODO: toggle like on video
@@ -169,7 +171,7 @@ const getLikedVideos = asyncHandler(async (req, res) => {
   ]);
 
   if (!likedVideos) {
-    throw new ApiError(401,"something went wrong while getting liked videos")
+    throw new ApiError(401, "something went wrong while getting liked videos");
   }
 
   return res

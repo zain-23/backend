@@ -9,6 +9,22 @@ import { uploadOnCloudinary } from "../utils/cloudinary.js";
 const getAllVideos = asyncHandler(async (req, res) => {
   const { page = 1, limit = 10, query, sortBy, sortType, userId } = req.query;
   //TODO: get all videos based on query, sort, pagination
+
+  const pipeline = [
+    {
+      $match: {
+        owner: new mongoose.Types.ObjectId(userId),
+      },
+    },
+  ];
+
+  if (query) {
+    pipeline.push({
+      $match: {
+        title: { $regex: query, $option: "i" },
+      },
+    });
+  }
 });
 
 const publishAVideo = asyncHandler(async (req, res) => {
@@ -140,6 +156,7 @@ const deleteVideo = asyncHandler(async (req, res) => {
 
 const togglePublishStatus = asyncHandler(async (req, res) => {
   const { videoId } = req.params;
+
   if (!isValidObjectId(videoId)) {
     throw new ApiError(401, "Invalid video id");
   }

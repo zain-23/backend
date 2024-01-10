@@ -4,6 +4,8 @@ import { ApiError } from "../utils/ApiError.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
 
+// All playlist Api Testing in done.
+
 const createPlaylist = asyncHandler(async (req, res) => {
   const { name, description } = req.body;
   //TODO: create playlist
@@ -50,7 +52,7 @@ const getUserPlaylists = asyncHandler(async (req, res) => {
         from: "videos",
         localField: "videos",
         foreignField: "_id",
-        as: "userPlaylist",
+        as: "playlistVideos",
         pipeline: [
           {
             $lookup: {
@@ -66,6 +68,13 @@ const getUserPlaylists = asyncHandler(async (req, res) => {
                   },
                 },
               ],
+            },
+          },
+          {
+            $addFields: {
+              channelOwner: {
+                $first: "$channelOwner",
+              },
             },
           },
           {
@@ -86,7 +95,7 @@ const getUserPlaylists = asyncHandler(async (req, res) => {
       $project: {
         name: 1,
         description: 1,
-        userPlaylist: 1,
+        playlistVideos: 1,
         createdAt: 1,
       },
     },
@@ -240,7 +249,7 @@ const removeVideoFromPlaylist = asyncHandler(async (req, res) => {
   }
 
   const deletePlaylistVideo = await Playlist.updateMany(
-    playlistId,
+    { _id: playlistId },
     {
       $pull: {
         videos: videoId,
@@ -317,7 +326,9 @@ const updatePlaylist = asyncHandler(async (req, res) => {
 
   return res
     .status(200)
-    .json(201, "playlist updated successfully", updatedPlaylist);
+    .json(
+      new ApiResponse(201, "playlist updated successfully", updatedPlaylist)
+    );
 });
 
 export {
