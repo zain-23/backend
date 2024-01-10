@@ -131,9 +131,67 @@ const getPlaylistById = asyncHandler(async (req, res) => {
               localField: "owner",
               foreignField: "_id",
               as: "user",
+              pipeline: [
+                {
+                  $project: {
+                    username: 1,
+                    avatar: 1,
+                  },
+                },
+              ],
+            },
+          },
+          {
+            $addFields: {
+              channelOwner: {
+                $first: "$user",
+              },
+            },
+          },
+          {
+            $project: {
+              videoFile: 1,
+              thumbnail: 1,
+              title: 1,
+              description: 1,
+              duration: 1,
+              views: 1,
+              channelOwner: 1,
             },
           },
         ],
+      },
+    },
+    {
+      $lookup: {
+        from: "users",
+        localField: "owner",
+        foreignField: "_id",
+        as: "user",
+        pipeline: [
+          {
+            $project: {
+              username: 1,
+              avatar: 1,
+            },
+          },
+        ],
+      },
+    },
+    {
+      $addFields: {
+        playlistOwner: {
+          $first: "$user",
+        },
+      },
+    },
+    {
+      $project: {
+        name: 1,
+        description: 1,
+        videos: 1,
+        createdAt: 1,
+        playlistOwner: 1,
       },
     },
   ]);
@@ -144,7 +202,7 @@ const getPlaylistById = asyncHandler(async (req, res) => {
 
   return res
     .status(200)
-    .json(new ApiResponse(201, "get playlist successfully", playlist));
+    .json(new ApiResponse(201, "get playlist successfully", playlist[0]));
 });
 
 const addVideoToPlaylist = asyncHandler(async (req, res) => {
