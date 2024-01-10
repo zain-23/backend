@@ -35,7 +35,6 @@ const createPlaylist = asyncHandler(async (req, res) => {
 const getUserPlaylists = asyncHandler(async (req, res) => {
   const { userId } = req.params;
   //TODO: get user playlists
-
   if (!isValidObjectId(userId)) {
     throw new ApiError(401, "invalid user id");
   }
@@ -54,6 +53,22 @@ const getUserPlaylists = asyncHandler(async (req, res) => {
         as: "userPlaylist",
         pipeline: [
           {
+            $lookup: {
+              from: "users",
+              localField: "owner",
+              foreignField: "_id",
+              as: "channelOwner",
+              pipeline: [
+                {
+                  $project: {
+                    username: 1,
+                    avatar: 1,
+                  },
+                },
+              ],
+            },
+          },
+          {
             $project: {
               views: 1,
               duration: 1,
@@ -61,9 +76,18 @@ const getUserPlaylists = asyncHandler(async (req, res) => {
               thumbnail: 1,
               title: 1,
               description: 1,
+              channelOwner: 1,
             },
           },
         ],
+      },
+    },
+    {
+      $project: {
+        name: 1,
+        description: 1,
+        userPlaylist: 1,
+        createdAt: 1,
       },
     },
   ]);
@@ -77,7 +101,7 @@ const getUserPlaylists = asyncHandler(async (req, res) => {
 
   return res
     .status(200)
-    .json(new ApiResponse(201, "get suer playlist successfully", userPlaylist));
+    .json(new ApiResponse(201, "get user playlist successfully", userPlaylist));
 });
 
 const getPlaylistById = asyncHandler(async (req, res) => {
