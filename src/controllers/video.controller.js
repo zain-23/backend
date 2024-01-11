@@ -4,7 +4,10 @@ import { User } from "../models/user.model.js";
 import { ApiError } from "../utils/ApiError.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
-import { uploadOnCloudinary } from "../utils/cloudinary.js";
+import {
+  deleteFromCloudinary,
+  uploadOnCloudinary,
+} from "../utils/cloudinary.js";
 
 const getAllVideos = asyncHandler(async (req, res) => {
   const { page = 1, limit = 10, query, sortBy, sortType, userId } = req.query;
@@ -52,12 +55,16 @@ const publishAVideo = asyncHandler(async (req, res) => {
     throw new ApiError(401, "Thumbanil and video is required");
   }
 
-  const video = await uploadOnCloudinary(videoFileLocalPath);
-  const thumbnail = await uploadOnCloudinary(thumbnailFileLocalPath);
+  const video = await uploadOnCloudinary("youtube/video", videoFileLocalPath);
+  const thumbnail = await uploadOnCloudinary(
+    "youtube/videoThumbnail",
+    thumbnailFileLocalPath
+  );
 
   if (!video) {
     throw new ApiError(500, "Some thing went wrong while uploading video");
   }
+
   if (!thumbnail) {
     throw new ApiError(500, "Some thing went wrong while uploading thumbnail");
   }
@@ -65,9 +72,9 @@ const publishAVideo = asyncHandler(async (req, res) => {
   const publishedVideo = await Video.create({
     title,
     description,
-    video: video.url,
-    thumbnail: thumbnail.url,
-    duration: Math.round(video.duration),
+    videoFile: video?.url,
+    thumbnail: thumbnail?.url,
+    duration: Math.round(video?.duration),
     owner: req.user?._id,
   });
 
@@ -108,32 +115,46 @@ const updateVideo = asyncHandler(async (req, res) => {
   if (!isValidObjectId(videoId)) {
     throw new ApiError(401, "Invalid video id");
   }
-  let thumbnailFileLocalPath;
-  if (req.file && req.file.path) {
-    thumbnailFileLocalPath = req.file.path;
-  }
 
-  const video = await Video.findByIdAndUpdate(
-    videoId,
-    {
-      $set: {
-        title,
-        description,
-        thumbnail: thumbnailFileLocalPath,
-      },
-    },
-    {
-      new: true,
-    }
+  const existingVideo = await Video.findById(videoId);
+  const deleteAvatarFromCloudinary = await deleteFromCloudinary(
+    "youtube/video",
+    existingVideo.videoFile
   );
+  console.log("deleteAvatarFromCloudinary", deleteAvatarFromCloudinary);
+  if (deleteAvatarFromCloudinary?.result === "ok") {
+    let videoFileLocalPath;
+    if (req.file && req.file.path) {
+      videoFileLocalPath = req.file.path;
+    }
 
-  if (!video) {
-    throw new ApiError(500, "some thing went wrong while updating video");
+    const video = await Video.findByIdAndUpdate(
+      videoId,
+      {
+        $set: {
+          title,
+          description,
+          videoFile: thumbnailFileLocalPath,
+        },
+      },
+      {
+        new: true,
+      }
+    );
+
+    if (!video) {
+      throw new ApiError(500, "some thing went wrong while updating video");
+    }
+
+    return res
+      .status(200)
+      .json(new ApiResponse(201, "video updated successfully", video));
+  } else {
+    throw new ApiError(
+      500,
+      "something went wrong while updating video try again"
+    );
   }
-
-  return res
-    .status(200)
-    .json(new ApiResponse(201, "video updated successfully", video));
 });
 
 const deleteVideo = asyncHandler(async (req, res) => {

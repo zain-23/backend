@@ -50,7 +50,6 @@ const registerUser = asyncHandler(async (req, res) => {
   const existedUser = await User.findOne({
     $or: [{ username }, { email }],
   });
-
   if (existedUser) {
     throw new ApiError(409, "User with email or username already exists");
   }
@@ -72,8 +71,14 @@ const registerUser = asyncHandler(async (req, res) => {
     throw new ApiError(400, "Avatar file is required");
   }
 
-  const avatar = await uploadOnCloudinary(avatarLocalPath);
-  const coverImage = await uploadOnCloudinary(coverImageLocalPath);
+  const avatar = await uploadOnCloudinary(
+    "youtube/userAvatar",
+    avatarLocalPath
+  );
+  const coverImage = await uploadOnCloudinary(
+    "youtube/userCoverImg",
+    coverImageLocalPath
+  );
 
   if (!avatar) {
     throw new ApiError(400, "Avatar file is required");
@@ -219,10 +224,8 @@ const refreshAccessToken = asyncHandler(async (req, res) => {
       secure: true,
     };
 
-    const {
-      accessToken,
-      newRefreshToken,
-    } = await generateAccessAndRefereshTokens(user._id);
+    const { accessToken, newRefreshToken } =
+      await generateAccessAndRefereshTokens(user._id);
 
     return res
       .status(200)
@@ -295,30 +298,39 @@ const updateUserAvatar = asyncHandler(async (req, res) => {
   }
 
   //TODO: delete old image - assignment
+  const user5 = await User.findById(req.user?._id);
 
-  const user5 = req.user?._id;
+  const deleteAvatarFromCloudinary = await deleteFromCloudinary(
+    "youtube/userAvatar",
+    user5.avatar
+  );
 
-  const deleteAvatarFromCloudinary = await deleteFromCloudinary(user5.avatar);
-  console.log("deleteAvatarFromCloudinary", deleteAvatarFromCloudinary);
-  const avatar = await uploadOnCloudinary(avatarLocalPath);
+  if (deleteAvatarFromCloudinary.result === "ok") {
+    const avatar = await uploadOnCloudinary(avatarLocalPath);
 
-  if (!avatar.url) {
-    throw new ApiError(400, "Error while uploading on avatar");
-  }
+    if (!avatar.url) {
+      throw new ApiError(400, "Error while uploading on avatar");
+    }
 
-  const user = await User.findByIdAndUpdate(
-    req.user?._id,
-    {
-      $set: {
-        avatar: avatar.url,
+    const user = await User.findByIdAndUpdate(
+      req.user?._id,
+      {
+        $set: {
+          avatar: avatar.url,
+        },
       },
-    },
-    { new: true }
-  ).select("-password");
+      { new: true }
+    ).select("-password");
 
-  return res
-    .status(200)
-    .json(new ApiResponse(200, user, "Avatar image updated successfully"));
+    return res
+      .status(200)
+      .json(new ApiResponse(200, user, "Avatar image updated successfully"));
+  } else {
+    throw new ApiError(
+      500,
+      "something went wrong while updating avatar try again"
+    );
+  }
 });
 
 const updateUserCoverImage = asyncHandler(async (req, res) => {

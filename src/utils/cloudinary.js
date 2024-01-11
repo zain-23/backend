@@ -7,12 +7,13 @@ cloudinary.config({
   api_secret: process.env.CLOUDINARY_API_SECRET,
 });
 
-const uploadOnCloudinary = async (localFilePath) => {
+const uploadOnCloudinary = async (folder, localFilePath) => {
   try {
     if (!localFilePath) return null;
     //upload the file on cloudinary
     const response = await cloudinary.uploader.upload(localFilePath, {
       resource_type: "auto",
+      folder: folder,
     });
     // file has been uploaded successfull
     //console.log("file is uploaded on cloudinary ", response.url);
@@ -24,16 +25,20 @@ const uploadOnCloudinary = async (localFilePath) => {
   }
 };
 
-const deleteFromCloudinary = async (localFilePath) => {
+const deleteFromCloudinary = async (folder, cloudinaryUrl) => {
+  console.log("folder", folder);
   try {
-    if (!localFilePath) return null;
+    if (!cloudinaryUrl) return null;
+    const imgPrefix = cloudinaryUrl.split("/").slice(-1)[0].split(".")[0];
+    console.log("imgPrefix", imgPrefix);
+    const response = await cloudinary.uploader.destroy(
+      `${folder}/${imgPrefix}`,
+      {
+        resource_type: "video",
+      }
+    );
 
-    cloudinary.api
-      .delete_resources([localFilePath], {
-        type: "upload",
-        resource_type: "auto",
-      })
-      .then(console.log);
+    return response;
   } catch (error) {
     console.log("ERROR deleteFromCloudinary : ", error);
     return null;
