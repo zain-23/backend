@@ -12,7 +12,6 @@ import {
 const getAllVideos = asyncHandler(async (req, res) => {
   const { page = 1, limit = 10, query, sortBy, sortType, userId } = req.query;
   //TODO: get all videos based on query, sort, pagination
-
   const pipeline = [
     {
       $match: {
@@ -24,10 +23,34 @@ const getAllVideos = asyncHandler(async (req, res) => {
   if (query) {
     pipeline.push({
       $match: {
-        title: { $regex: query, $option: "i" },
+        title: { $regex: query, $options: "i" },
       },
     });
   }
+
+  if (sortBy && sortType) {
+    pipeline.push({
+      $sort: {
+        [sortBy]: sortType === "asc" ? 1 : -1,
+      },
+    });
+  }
+  const skip = (page - 1) * limit;
+  pipeline.push({ $skip: skip });
+  pipeline.push({ $limit: Number(limit) });
+
+  const videos = await Video.aggregate(pipeline);
+
+  if (!videos) {
+    throw new ApiError(
+      500,
+      "something went wrong while getting video by sorting"
+    );
+  }
+
+  return res
+    .status(200)
+    .json(new ApiResponse(201, "video get successfully", videos));
 });
 
 const publishAVideo = asyncHandler(async (req, res) => {
