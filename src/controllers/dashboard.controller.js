@@ -16,12 +16,27 @@ const getChannelStats = asyncHandler(async (req, res) => {
       },
     },
     {
-      $group: {
-        _id: null,
-        totalVideos: { $sum: 1 },
-        totalViews: { $sum: "$views" },
+      $lookup: {
+        from: "likes",
+        localField: "_id",
+        foreignField: "video",
+        as: "likes",
       },
     },
+    {
+      $addFields: {
+        likes: {
+          $first: "$likes",
+        },
+      },
+    },
+    // {
+    //   $group: {
+    //     _id: null,
+    //     totalVideos: { $sum: 1 },
+    //     totalViews: { $sum: "$views" },
+    //   },
+    // },
   ]);
 
   return res
