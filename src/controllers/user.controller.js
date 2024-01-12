@@ -341,26 +341,36 @@ const updateUserCoverImage = asyncHandler(async (req, res) => {
   }
 
   //TODO: delete old image - assignment
+  const user5 = await User.findById(req.user?._id);
 
-  const coverImage = await uploadOnCloudinary(coverImageLocalPath);
+  const deleteCoverImgFromCloudinary = await deleteFromCloudinary(
+    "youtube/coverImg",
+    user5.coverImage
+  );
 
-  if (!coverImage.url) {
-    throw new ApiError(400, "Error while uploading on avatar");
-  }
+  if (deleteCoverImgFromCloudinary.result === "ok") {
+    const coverImage = await uploadOnCloudinary(coverImageLocalPath);
 
-  const user = await User.findByIdAndUpdate(
-    req.user?._id,
-    {
-      $set: {
-        coverImage: coverImage.url,
+    if (!coverImage.url) {
+      throw new ApiError(400, "Error while uploading on avatar");
+    }
+
+    const user = await User.findByIdAndUpdate(
+      req.user?._id,
+      {
+        $set: {
+          coverImage: coverImage.url,
+        },
       },
-    },
-    { new: true }
-  ).select("-password");
+      { new: true }
+    ).select("-password");
 
-  return res
-    .status(200)
-    .json(new ApiResponse(200, user, "Cover image updated successfully"));
+    return res
+      .status(200)
+      .json(new ApiResponse(200, user, "Cover image updated successfully"));
+  } else {
+    throw new ApiError(500, "something went wrong while updating cover Image");
+  }
 });
 
 const getUserChannelProfile = asyncHandler(async (req, res) => {

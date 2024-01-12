@@ -26,7 +26,6 @@ const uploadOnCloudinary = async (folder, localFilePath) => {
 };
 
 const deleteFromCloudinary = async (folder, cloudinaryUrl) => {
-  console.log("folder", folder);
   try {
     if (!cloudinaryUrl) return null;
     const imgPrefix = cloudinaryUrl.split("/").slice(-1)[0].split(".")[0];

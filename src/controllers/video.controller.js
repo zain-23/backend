@@ -116,16 +116,26 @@ const updateVideo = asyncHandler(async (req, res) => {
     throw new ApiError(401, "Invalid video id");
   }
 
+  // delete on thumbnail
   const existingVideo = await Video.findById(videoId);
-  const deleteAvatarFromCloudinary = await deleteFromCloudinary(
+  const deleteThumbnailFromCloudinary = await deleteFromCloudinary(
     "youtube/video",
-    existingVideo.videoFile
+    existingVideo.thumbnail
   );
-  console.log("deleteAvatarFromCloudinary", deleteAvatarFromCloudinary);
-  if (deleteAvatarFromCloudinary?.result === "ok") {
-    let videoFileLocalPath;
+
+  if (deleteThumbnailFromCloudinary?.result === "ok") {
+    let thumbnailFileLocalPath;
     if (req.file && req.file.path) {
-      videoFileLocalPath = req.file.path;
+      thumbnailFileLocalPath = req.file.path;
+    }
+
+    const thumbnailCloudinary = await uploadOnCloudinary(
+      "youtube/videoThumbnail",
+      thumbnailFileLocalPath
+    );
+
+    if (!thumbnailCloudinary) {
+      throw new ApiError("something went wrong while updating video details");
     }
 
     const video = await Video.findByIdAndUpdate(
@@ -134,7 +144,7 @@ const updateVideo = asyncHandler(async (req, res) => {
         $set: {
           title,
           description,
-          videoFile: thumbnailFileLocalPath,
+          thumbnail: thumbnailCloudinary.url,
         },
       },
       {
@@ -164,15 +174,35 @@ const deleteVideo = asyncHandler(async (req, res) => {
     throw new ApiError(401, "Invalid video id");
   }
 
-  const video = await Video.findByIdAndDelete(videoId);
+  const video = await Video.findById(videoId);
 
   if (!video) {
     throw new ApiError(500, "can't find video");
   }
 
+  const deleteThumbnailFromCloudinary = await deleteFromCloudinary(
+    "youtube/videoThumbnail",
+    video.thumbnail
+  );
+
+  if (!deleteThumbnailFromCloudinary) {
+    throw new ApiError(500, "something went wrong while deleting thumbnail");
+  }
+
+  const deleteVideoFromCloudinary = await deleteFromCloudinary(
+    "youtube/video",
+    video.videoFile
+  );
+
+  if (!deleteVideoFromCloudinary) {
+    throw new ApiError(500, "something went wrong while deleting video");
+  }
+
+  const deleteFromDB = await Video.findByIdAndDelete(video._id);
+
   return res
     .status(200)
-    .json(new ApiResponse(201, "video deleted successfully", video));
+    .json(new ApiResponse(201, "video deleted successfully", deleteFromDB));
 });
 
 const togglePublishStatus = asyncHandler(async (req, res) => {
