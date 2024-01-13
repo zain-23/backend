@@ -104,7 +104,6 @@ const toggleTweetLike = asyncHandler(async (req, res) => {
 
 const getLikedVideos = asyncHandler(async (req, res) => {
   //TODO: get all liked videos
-
   const likedVideos = await Like.aggregate([
     {
       $match: {
@@ -118,17 +117,6 @@ const getLikedVideos = asyncHandler(async (req, res) => {
         foreignField: "_id",
         as: "video",
         pipeline: [
-          {
-            $project: {
-              videoFile: 1,
-              thumbnail: 1,
-              title: 1,
-              description: 1,
-              duration: 1,
-              views: 1,
-              owner: 1,
-            },
-          },
           {
             $lookup: {
               from: "users",
@@ -152,6 +140,17 @@ const getLikedVideos = asyncHandler(async (req, res) => {
               },
             },
           },
+          {
+            $project: {
+              videoFile: 1,
+              thumbnail: 1,
+              title: 1,
+              description: 1,
+              duration: 1,
+              views: 1,
+              user: 1,
+            },
+          },
         ],
       },
     },
@@ -165,7 +164,6 @@ const getLikedVideos = asyncHandler(async (req, res) => {
     {
       $project: {
         video: 1,
-        likedBy: 1,
       },
     },
   ]);
