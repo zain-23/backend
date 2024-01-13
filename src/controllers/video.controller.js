@@ -55,7 +55,6 @@ const getAllVideos = asyncHandler(async (req, res) => {
 
 const publishAVideo = asyncHandler(async (req, res) => {
   const { title, description } = req.body;
-
   if (
     [title, description].some((fields) => fields === "" || fields === undefined)
   ) {
@@ -64,7 +63,6 @@ const publishAVideo = asyncHandler(async (req, res) => {
 
   let videoFileLocalPath;
   let thumbnailFileLocalPath;
-
   if (
     req.files &&
     Array.isArray(req.files.videoFile) &&
@@ -73,11 +71,9 @@ const publishAVideo = asyncHandler(async (req, res) => {
     videoFileLocalPath = req.files?.videoFile[0].path;
     thumbnailFileLocalPath = req.files?.thumbnail[0].path;
   }
-
   if (!videoFileLocalPath && !thumbnailFileLocalPath) {
     throw new ApiError(401, "Thumbanil and video is required");
   }
-
   const video = await uploadOnCloudinary("youtube/video", videoFileLocalPath);
   const thumbnail = await uploadOnCloudinary(
     "youtube/videoThumbnail",

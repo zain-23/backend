@@ -7,7 +7,7 @@ import {
 } from "../utils/cloudinary.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 import jwt from "jsonwebtoken";
-import mongoose from "mongoose";
+import mongoose, { isValidObjectId } from "mongoose";
 
 const generateAccessAndRefereshTokens = async (userId) => {
   try {
@@ -532,6 +532,25 @@ const getWatchHistory = asyncHandler(async (req, res) => {
     );
 });
 
+// in user controller i think one controller in missing that is createUserWatchHistory
+
+const createUserWatchHistory = asyncHandler(async (req, res) => {
+  const { videoId } = req.params;
+
+  if (!isValidObjectId(videoId)) {
+    throw new ApiError(401, "invalid video id");
+  }
+
+  const user = await User.findById(req.user?._id);
+
+  user.watchHistory.push(videoId);
+
+  await user.save({ validateBeforeSave: false });
+
+  return res
+    .status(200)
+    .json(new ApiResponse(201, "video added in watch history"));
+});
 export {
   registerUser,
   loginUser,
@@ -544,4 +563,5 @@ export {
   updateUserCoverImage,
   getUserChannelProfile,
   getWatchHistory,
+  createUserWatchHistory,
 };
