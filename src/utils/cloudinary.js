@@ -25,15 +25,15 @@ const uploadOnCloudinary = async (folder, localFilePath) => {
   }
 };
 
-const deleteFromCloudinary = async (folder, cloudinaryUrl) => {
+const deleteFromCloudinary = async (folder, cloudinaryUrl, resourceType) => {
   try {
     if (!cloudinaryUrl) return null;
     const imgPrefix = cloudinaryUrl.split("/").slice(-1)[0].split(".")[0];
-    console.log("imgPrefix", imgPrefix);
+
     const response = await cloudinary.uploader.destroy(
       `${folder}/${imgPrefix}`,
       {
-        resource_type: "video",
+        resource_type: resourceType,
       }
     );
 

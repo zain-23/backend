@@ -142,7 +142,7 @@ const updateVideo = asyncHandler(async (req, res) => {
   // delete on thumbnail
   const existingVideo = await Video.findById(videoId);
   const deleteThumbnailFromCloudinary = await deleteFromCloudinary(
-    "youtube/video",
+    "youtube/videoThumbnail",
     existingVideo.thumbnail
   );
 
